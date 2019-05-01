@@ -18,6 +18,7 @@ class Query {
         this.get = this.get.bind(this);
         this.insert = this.insert.bind(this);
         this.update = this.update.bind(this);
+        this.get_compiled_select = this.get_compiled_select.bind(this);
         this.clear();
     }
     clear() {
@@ -56,25 +57,8 @@ class Query {
        return this;
     }
     async get(strsql) {
-       if (strsql) this.from(strsql);
-
-       if (this.select_str === null) this.select_str = '*';
+       query = this.get_compiled_select(strsql);
        
-       let query = `SELECT ${this.select_str} FROM ${this.from_str}`;
-
-       if (this.where_arr.length > 0) {
-           query += ` WHERE ${this.where_arr.join(' AND ')}`;
-       }
-
-       if (this.group_by_str !== null) {
-           query += ` GROUP BY ${this.group_by_str}`;
-       }
-
-       if (this.order_by_str !== null) {
-           query += ` GROUP BY ${this.order_by_str}`;
-       }
-
-       this.clear();
        try {
            return await this.db.query(query);
        } catch (err) {
@@ -123,6 +107,29 @@ class Query {
        } catch (err) {
            console.error(err);
        }
+    }
+    get_compiled_select(strsql) {
+        if (strsql) this.from(strsql);
+
+       if (this.select_str === null) this.select_str = '*';
+       
+       let query = `SELECT ${this.select_str} FROM ${this.from_str}`;
+
+       if (this.where_arr.length > 0) {
+           query += ` WHERE ${this.where_arr.join(' AND ')}`;
+       }
+
+       if (this.group_by_str !== null) {
+           query += ` GROUP BY ${this.group_by_str}`;
+       }
+
+       if (this.order_by_str !== null) {
+           query += ` GROUP BY ${this.order_by_str}`;
+       }
+
+       this.clear();
+
+       return query;
     }
 }
 
