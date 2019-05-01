@@ -59,7 +59,7 @@ class Query {
        return this;
     }
     async get(strsql) {
-       query = this.get_compiled_select(strsql);
+       const query = this.get_compiled_select(strsql);
 
        try {
            return await this.db.query(query);
