@@ -1,0 +1,22 @@
+{
+  "name": "mysql-query",
+  "version": "0.0.1",
+  "description": "Function to build MYSQL queries in a more structure manner",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/wviveiro/mysql-query.git"
+  },
+  "author": "Wellington Viveiro <wellington@asmex.digital>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wviveiro/mysql-query/issues"
+  },
+  "homepage": "https://github.com/wviveiro/mysql-query#readme",
+  "dependencies": {
+    "mysql": "^2.17.1"
+  }
+}
