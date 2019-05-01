@@ -18,6 +18,7 @@ class Query {
         this.get = this.get.bind(this);
         this.insert = this.insert.bind(this);
         this.update = this.update.bind(this);
+        this.join = this.join.bind(this);
         this.get_compiled_select = this.get_compiled_select.bind(this);
         this.clear();
     }
@@ -27,6 +28,7 @@ class Query {
        this.from_str = null;
        this.order_by_str = null;
        this.group_by_str = null;
+       this.joins = [];
     }
     select(strsql) {
         this.select_str = strsql;
@@ -58,7 +60,7 @@ class Query {
     }
     async get(strsql) {
        query = this.get_compiled_select(strsql);
-       
+
        try {
            return await this.db.query(query);
        } catch (err) {
@@ -116,7 +118,11 @@ class Query {
        let query = `SELECT ${this.select_str} FROM ${this.from_str}`;
 
        if (this.where_arr.length > 0) {
-           query += ` WHERE ${this.where_arr.join(' AND ')}`;
+            query += ` WHERE ${this.where_arr.join(' AND ')}`;
+        }
+
+       if (this.joins.length > 0) {
+           query += ` ${this.joins.join(' ')}`;
        }
 
        if (this.group_by_str !== null) {
@@ -130,6 +136,13 @@ class Query {
        this.clear();
 
        return query;
+    }
+    join(table, onclause, jointype) {
+        jointype = (jointype || 'INNER').toUpperCase();
+        let strsql = `${jointype} JOIN ${table} ON ${onclause}`;
+        this.joins.push(strsql);
+
+        return this;
     }
 }
 
