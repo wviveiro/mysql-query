@@ -9,6 +9,7 @@ class Query {
         this.db = db;
         this.query = db.query;
         this.escape = require('mysql').escape;
+        this.end = db.end;
         this.select = this.select.bind(this);
         this.from = this.from.bind(this);
         this.order_by = this.order_by.bind(this);
