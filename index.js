@@ -19,6 +19,7 @@ class Query {
         this.insert = this.insert.bind(this);
         this.update = this.update.bind(this);
         this.join = this.join.bind(this);
+        this.delete = this.delete.bind(this);
         this.get_compiled_select = this.get_compiled_select.bind(this);
         this.clear();
     }
@@ -31,11 +32,11 @@ class Query {
        this.joins = [];
     }
     select(strsql) {
-        this.select_str = strsql;
+        this.select_str = this.escape_select_fields(strsql);
         return this;
     }
-    from(strsql) {
-        this.from_str = strsql;
+    from(from) {
+        this.from_str = this.escape_fields(from);
         return this;
     }
     order_by(strsql) {
@@ -79,7 +80,7 @@ class Query {
            }
        }
 
-       let strsql = `INSERT INTO ${table} (${keys.join(', ')})VALUES(${values.join(', ')})`;
+       let strsql = `INSERT INTO ${table} (\`${keys.join('`, `')}\`)VALUES(${values.join(', ')})`;
 
        this.clear();
        try {
@@ -92,7 +93,7 @@ class Query {
        const sets = [];
        for (let key in data) {
            if (data.hasOwnProperty(key)) {
-               sets.push(`${key} = ${this.escape(data[key])}`);
+               sets.push(`\`${key}\` = ${this.escape(data[key])}`);
            }
        }
 
@@ -117,13 +118,13 @@ class Query {
        
        let query = `SELECT ${this.select_str} FROM ${this.from_str}`;
 
-       if (this.where_arr.length > 0) {
-            query += ` WHERE ${this.where_arr.join(' AND ')}`;
-        }
-
        if (this.joins.length > 0) {
            query += ` ${this.joins.join(' ')}`;
        }
+
+       if (this.where_arr.length > 0) {
+            query += ` WHERE ${this.where_arr.join(' AND ')}`;
+        }
 
        if (this.group_by_str !== null) {
            query += ` GROUP BY ${this.group_by_str}`;
@@ -139,10 +140,63 @@ class Query {
     }
     join(table, onclause, jointype) {
         jointype = (jointype || 'INNER').toUpperCase();
-        let strsql = `${jointype} JOIN ${table} ON ${onclause}`;
+        let strsql = `${jointype} JOIN ${this.escape_fields(table)} ON ${onclause}`;
         this.joins.push(strsql);
+        
 
         return this;
+    }
+    async delete(table) {
+        let strsql = `DELETE FROM ${table}`;
+
+       if (this.where_arr.length > 0) {
+           strsql += ` WHERE ${this.where_arr.join(' AND ')}`;
+       }
+
+       this.clear();
+
+       try {
+           return await this.query(strsql);
+       } catch (err) {
+           console.error(err);
+       }
+    }
+    escape_select_fields(fields) {
+        fields = fields.split(',').map(this.escape_fields);
+
+    
+        return fields.join(', ');
+    }
+    escape_fields(f) {
+        f = f.replace(/\s\s+/g, ' ').trim();
+
+        if (f.indexOf('(') > -1 || f.indexOf(')') > -1 || f.indexOf("'") > -1 || f.indexOf('`') > -1) {
+            return f;
+        }  
+
+        let alias = null;
+        let offset;
+
+        // Get alias
+        if ((offset = f.toUpperCase().lastIndexOf(' AS ')) > -1) {
+            alias = f.substr(offset + 4);
+        } else if ((offset = f.toUpperCase().lastIndexOf(' ')) > -1) {
+            alias = f.substr(offset + 1);
+        }
+
+        if (alias) {
+            f = f.substr(0, offset);
+        }  
+
+        f = "`" + f + "`";
+
+        f = f.replace(/\./g, "`.`");
+
+        if (alias) {
+            f = f + " AS " + "`" + alias + "`";
+        }
+
+        return f;
     }
 }
 
