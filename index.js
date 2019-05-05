@@ -59,6 +59,12 @@ class Query {
        this.where_arr.push(strsql);
        return this;
     }
+    where_in(field, arr) {
+        arr = arr.map((a) => this.escape(a));
+        let strsql = `${field} IN(${arr.join(', ')})`;
+        this.where_arr.push(strsql);
+        return this;
+    }
     async get(strsql) {
        const query = this.get_compiled_select(strsql);
 
@@ -131,7 +137,7 @@ class Query {
        }
 
        if (this.order_by_str !== null) {
-           query += ` GROUP BY ${this.order_by_str}`;
+           query += ` ORDER BY ${this.order_by_str}`;
        }
 
        this.clear();
