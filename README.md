@@ -36,6 +36,51 @@ var result = await db.select('*').from('mytable').where('id', 1).get();
 console.log(result);
 ```
 
+## JOIN
+
+`db.join(table, onstatement, [left])`
+
+```javascript
+
+var result = await db.select('*')
+                    .join('tblb', 'tblb.id = tbla.fk')
+                    .join('tblc', 'tblb.id = tblc.fk', 'left')
+                    .where('tbla.id', 1).get('tbla');
+
+console.log(result);
+```
+
+## GROUP BY
+
+`db.group_by(groupstatement)`
+
+```javascript
+
+var result = await db.select('*')
+                    .join('tblb', 'tblb.id = tbla.fk')
+                    .join('tblc', 'tblb.id = tblc.fk', 'left')
+                    .group_by('tbla.id, tblb.id')
+                    .where('tbla.id', 1).get('tbla');
+
+console.log(result);
+```
+
+## LIMIT
+
+`db.limit(offset, total)` or `db.limit(total)`
+
+```javascript
+
+var result = await db.select('*')
+                    .join('tblb', 'tblb.id = tbla.fk')
+                    .join('tblc', 'tblb.id = tblc.fk', 'left')
+                    .group_by('tbla.id, tblb.id')
+                    .limit(10, 20)
+                    .where('tbla.id', 1).get('tbla');
+
+console.log(result);
+```
+
 ## INSERT
 
 `db.insert(table, objectToInsert);`
@@ -45,6 +90,22 @@ var result = await db.insert('mytable', {
     field1: 'foo',
     field2: 'bar'
 });
+
+console.log(result);
+```
+
+## INSERT BATCH
+
+`db.insert(table, [objectsToInsert]);`
+
+```javascript
+var objs = [
+    {field1: 'foo', field2: 'bar'},
+    {field1: 'foo2', field2: 'bar2'},
+    {field1: 'foo3', field2: 'bar3'},
+]
+
+var result = await db.insert_batch('mytable', objs);
 
 console.log(result);
 ```
