@@ -17,9 +17,11 @@ class Query {
         this.where = this.where.bind(this);
         this.get = this.get.bind(this);
         this.insert = this.insert.bind(this);
+        this.insert_batch = this.insert_batch.bind(this);
         this.update = this.update.bind(this);
         this.join = this.join.bind(this);
         this.delete = this.delete.bind(this);
+        this.limit = this.limit.bind(this);
         this.get_compiled_select = this.get_compiled_select.bind(this);
         this.clear();
     }
@@ -29,6 +31,7 @@ class Query {
        this.from_str = null;
        this.order_by_str = null;
        this.group_by_str = null;
+       this.limit_str = null;
        this.joins = [];
     }
     select(strsql) {
@@ -47,7 +50,13 @@ class Query {
         this.group_by_str = strsql;
         return this;
     }
-   where(field, value, escape) {
+    limit(offset, total) {
+        this.limit_str = offset;
+        if (total) this.limit_str += `, ${total}`;
+
+        return this;
+    }
+    where(field, value, escape) {
        let strsql = `${field}`;
        if (field.indexOf(' ') === -1) {
            strsql +=  ` =`;
@@ -95,6 +104,35 @@ class Query {
            console.error(err);
        }
     }
+    async insert_batch(table, data) {
+        const keys = [];
+        let values = [];
+        for (let key in data[0]) {
+            if (data[0].hasOwnProperty(key)) {
+                keys.push(key);
+            }
+        }
+
+        data.forEach((d) => {
+            const v = [];
+            for (let i in d) {
+                if (d.hasOwnProperty(i)) {
+                    v.push(this.escape(d[i]));
+                }
+            }
+            values.push(`(${v.join(', ')})`);
+        });
+
+
+        let strsql = `INSERT INTO ${table} (\`${keys.join('`, `')}\`)VALUES${values.join(', ')}`;
+
+        this.clear();
+        try {
+            return await this.query(strsql);
+        } catch (err) {
+            console.error(err);
+        }
+    }
     async update(table, data) {
        const sets = [];
        for (let key in data) {
@@ -137,8 +175,12 @@ class Query {
        }
 
        if (this.order_by_str !== null) {
-           query += ` ORDER BY ${this.order_by_str}`;
-       }
+        query += ` ORDER BY ${this.order_by_str}`;
+    }
+
+    if (this.limit_str !== null) {
+        query += ` LIMIT ${this.limit_str}`;
+    }
 
        this.clear();
 
@@ -176,7 +218,7 @@ class Query {
     escape_fields(f) {
         f = f.replace(/\s\s+/g, ' ').trim();
 
-        if (f.indexOf('(') > -1 || f.indexOf(')') > -1 || f.indexOf("'") > -1 || f.indexOf('`') > -1) {
+        if (f.indexOf('(') > -1 || f.indexOf(')') > -1 || f.indexOf("'") > -1 || f.indexOf('`') > -1 || f.indexOf('SQL_CALC_FOUND_ROWS') > -1) {
             return f;
         }  
 
