@@ -22,6 +22,7 @@ class Query {
         this.join = this.join.bind(this);
         this.delete = this.delete.bind(this);
         this.limit = this.limit.bind(this);
+        this.transaction = this.transaction.bind(this);
         this.get_compiled_select = this.get_compiled_select.bind(this);
         this.clear();
     }
@@ -218,9 +219,14 @@ class Query {
     escape_fields(f) {
         f = f.replace(/\s\s+/g, ' ').trim();
 
-        if (f.indexOf('(') > -1 || f.indexOf(')') > -1 || f.indexOf("'") > -1 || f.indexOf('`') > -1 || f.indexOf('SQL_CALC_FOUND_ROWS') > -1) {
+        if (f.indexOf('(') > -1 || f.indexOf(')') > -1 || f.indexOf("'") > -1 || f.indexOf('`') > -1 || f.indexOf('SQL_CALC_FOUND_ROWS') > -1 || f.indexOf('*') === 0) {
             return f;
         }  
+
+        if (f.indexOf('.*') > -1) {
+            f = f.replace(/(.*)\.\*/, '`$1`.*');
+            return f;
+        }
 
         let alias = null;
         let offset;
@@ -245,6 +251,21 @@ class Query {
         }
 
         return f;
+    }
+    async transaction(cb) {
+        /**
+         * Creates a mysql transaction.
+         * function receives a parameter commit, to finish the transaction
+         *
+         * @author Wellington Viveiro <wviveiro@gmail.com>
+         **/
+        
+        const commit = async () => {
+            await this.query('COMMIT');
+        }
+
+        await this.query('START TRANSACTION');
+        await cb(commit);
     }
 }
 
