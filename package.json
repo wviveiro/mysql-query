@@ -1,6 +1,6 @@
 {
   "name": "mysql-query",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Function to build MYSQL queries in a more structure manner",
   "main": "index.js",
   "scripts": {
